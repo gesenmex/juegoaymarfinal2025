@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego: Une las palabras con imágenes</title>
+<style>
+  body {
+    font-family: "Poppins", Arial, sans-serif;
+    background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    min-height: 100vh;
+    margin: 0;
+  }
+
+  h1 {
+    margin-bottom: 5px;
+    color: #0d47a1;
+    text-shadow: 1px 1px 2px #fff;
+  }
+
+  p {
+    margin-bottom: 25px;
+    color: #333;
+  }
+
+  #words {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin-bottom: 40px;
+    width: 80%;
+    max-width: 900px;
+  }
+
+  #images {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    width: 80%;
+    max-width: 900px;
+  }
+
+  .word, .image {
+    border: 2px solid #1976d2;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    cursor: grab;
+    user-select: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  .word:hover {
+    background-color: #e3f2fd;
+    transform: scale(1.05);
+  }
+
+  .image {
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: #f9f9f9;
+  }
+
+  .image img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    transition: transform 0.3s;
+  }
+
+  .image img:hover {
+    transform: scale(1.1);
+  }
+
+  .correct {
+    background-color: #c8e6c9 !important;
+    border-color: #2e7d32 !important;
+  }
+
+  .wrong {
+    background-color: #ffcdd2 !important;
+    border-color: #c62828 !important;
+  }
+
+  #message {
+    margin-top: 30px;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  #buttons {
+    margin-top: 15px;
+    display: none;
+    gap: 20px;
+  }
+
+  button {
+    padding: 10px 25px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  #restart {
+    background-color: #43a047;
+    color: white;
+  }
+
+  #exit {
+    background-color: #e53935;
+    color: white;
+  }
+
+  button:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎯 Une las palabras con su imagen</h1>
+<p>Tienes máximo 5 errores permitidos</p>
+
+<!-- Palabras -->
+<div id="words"></div>
+
+<!-- Imágenes -->
+<div id="images"></div>
+
+<div id="message"></div>
+
+<div id="buttons">
+  <button id="restart">🔁 Jugar de nuevo</button>
+  <button id="exit">🚪 Salir</button>
+</div>
+
+<script>
+const words = [
+  "SAMI GILLGAÑANA", "SIQICHAÑA", "TUXU", "PANKA", "QILLQAÑA PIRQA",
+  "PATAKA", "PA WARANQHA", "KHITUÑA", "PACHA", "TIWANA"
+];
+
+const images = [
+  { name: "SAMI GILLGAÑANA", url: "../JuegoAymara/Imagenes/color.png" },
+  { name: "SIQICHAÑA", url: "../JuegoAymara/Imagenes/regla.png" },
+  { name: "TUXU", url: "../JuegoAymara/Imagenes/ventana.jpg" },
+  { name: "PANKA", url: "../JuegoAymara/Imagenes/libro.png" },
+  { name: "QILLQAÑA PIRQA", url: "../JuegoAymara/Imagenes/pizarra.jpg" },
+  { name: "PATAKA", url: "../JuegoAymara/Imagenes/cien.png" },
+  { name: "PA WARANQHA", url: "../JuegoAymara/Imagenes/dosmil.png" },
+  { name: "KHITUÑA", url: "../JuegoAymara/Imagenes/tajador.png" },
+  { name: "PACHA", url: "../JuegoAymara/Imagenes/reloj.png" },
+  { name: "TIWANA", url: "../JuegoAymara/Imagenes/silla.png" }
+];
+
+let attempts = 0;
+let correct = 0;
+
+const wordsContainer = document.getElementById("words");
+const imagesContainer = document.getElementById("images");
+const message = document.getElementById("message");
+const buttons = document.getElementById("buttons");
+const restartBtn = document.getElementById("restart");
+const exitBtn = document.getElementById("exit");
+
+restartBtn.addEventListener("click", resetGame);
+exitBtn.addEventListener("click", exitGame);
+
+// Mezclar arreglo
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+// Crear palabras
+function createWords() {
+  wordsContainer.innerHTML = "";
+  shuffle([...words]).forEach(word => {
+    const div = document.createElement("div");
+    div.textContent = word;
+    div.classList.add("word");
+    div.draggable = true;
+    div.id = word;
+    div.addEventListener("dragstart", dragStart);
+    wordsContainer.appendChild(div);
+  });
+}
+
+// Crear imágenes
+function createImages() {
+  imagesContainer.innerHTML = "";
+  shuffle([...images]).forEach(img => {
+    const div = document.createElement("div");
+    div.classList.add("image");
+    div.dataset.name = img.name;
+
+    const imageEl = document.createElement("img");
+    imageEl.src = img.url;
+    imageEl.alt = img.name;
+    div.appendChild(imageEl);
+
+    div.addEventListener("dragover", dragOver);
+    div.addEventListener("drop", dropWord);
+    imagesContainer.appendChild(div);
+  });
+}
+
+function dragStart(e) {
+  e.dataTransfer.setData("text", e.target.id);
+}
+function dragOver(e) {
+  e.preventDefault();
+}
+
+function dropWord(e) {
+  e.preventDefault();
+  const draggedWord = e.dataTransfer.getData("text");
+  const target = e.target.closest(".image");
+  const targetName = target.dataset.name;
+  const wordElement = document.getElementById(draggedWord);
+
+  if (draggedWord === targetName) {
+    target.classList.add("correct");
+    wordElement.classList.add("correct");
+    wordElement.draggable = false;
+    correct++;
+  } else {
+    target.classList.add("wrong");
+    setTimeout(() => target.classList.remove("wrong"), 700);
+    attempts++;
+  }
+  checkGameStatus();
+}
+
+function checkGameStatus() {
+  if (attempts >= 5) {
+    showEndMessage("❌ PERDISTE", "red");
+  } else if (correct === words.length) {
+    showEndMessage("🎉 GANASTE", "green");
+  }
+}
+
+function showEndMessage(text, color) {
+  message.textContent = text;
+  message.style.color = color;
+  buttons.style.display = "flex";
+}
+
+function resetGame() {
+  attempts = 0;
+  correct = 0;
+  message.textContent = "";
+  buttons.style.display = "none";
+  createWords();
+  createImages();
+}
+
+function exitGame() {
+  message.textContent = "👋 Gracias por jugar";
+  message.style.color = "#1565c0";
+  wordsContainer.innerHTML = "";
+  imagesContainer.innerHTML = "";
+  buttons.style.display = "none";
+}
+
+// Inicializar
+createWords();
+createImages();
+</script>
+</body>
+</html>
